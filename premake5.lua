@@ -80,7 +80,7 @@ project "hierarchical-tags-lib"
         {
             (INCLUDE_DIR)
         }
-        links { "cityhash-c" }
+        links { "cityhash-c", "libxxhash" }
 
 -- project "hierarchical-tags-tests"
 --         kind ""
