@@ -1,3 +1,6 @@
 [submodule "cityhash"]
 	path = cityhash
 	url = https://github.com/Markyparky56/cityhash.git
+[submodule "xxHash"]
+	path = xxHash
+	url = https://github.com/Markyparky56/xxHash.git

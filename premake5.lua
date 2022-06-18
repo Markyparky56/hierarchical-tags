@@ -85,4 +85,5 @@ project "hierarchical-tags-lib"
 -- project "hierarchical-tags-tests"
 --         kind ""
 
-include "cityhash/cityhash-projects.lua"
+include "cityhash/cityhash-clib.lua"
+include "xxHash/premake_unofficial/xxhash.lua"
