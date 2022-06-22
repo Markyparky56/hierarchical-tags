@@ -66,19 +66,21 @@ workspace "hierarchical-tags"
 
 project "hierarchical-tags-lib"
         kind "StaticLib"
-        language "C++"
-        cppdialect "C++20"
+        language "C"
+        cdialect "C11"
         exceptionhandling (EXCEPTIONS_ENABLED)
         rtti "Off"
         staticruntime (STATIC_RUNTIME)
         files
         {
-            path.join(SRC_DIR, "**.cpp"),
+            path.join(SRC_DIR, "**.c"),
             path.join(INCLUDE_DIR, "**.h")
         }
         includedirs
         {
-            (INCLUDE_DIR)
+            (INCLUDE_DIR),
+            path.join("cityhash", "src"),
+            "xxHash"
         }
         links { "cityhash-c", "libxxhash" }
 
