@@ -32,7 +32,7 @@ struct HashedStringMap
   // When NumElements equals this value we grow the number of buckets, reallocate, and redistribute the map's contents
   uint32_t GrowthTrigger;
 
-  HashedStringEntry* buckets;
+  HashedStringEntry** Buckets;
 };
 
 HashedStringMap* HashedStringMap_Create(uint32_t initialSize);

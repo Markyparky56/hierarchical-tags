@@ -1,6 +1,9 @@
 #include "HashedStringMap.h"
 #include <string.h>
+#include <assert.h>
+#include <math.h>
 
+// Create a new HashedStringEntry given a key (hash) and the corresponding string
 HashedStringEntry* HashedStringEntry_Create(uint32_t inKey, const char* inString)
 {
   HashedStringEntry* newEntry = (HashedStringEntry*)malloc(sizeof(HashedStringEntry));
@@ -17,6 +20,7 @@ HashedStringEntry* HashedStringEntry_Create(uint32_t inKey, const char* inString
   return NULL;
 }
 
+// Get the last entry in a list of entries
 HashedStringEntry* HashedStringEntry_GetEnd(HashedStringEntry* headOfList)
 {
   if (headOfList)
@@ -31,6 +35,7 @@ HashedStringEntry* HashedStringEntry_GetEnd(HashedStringEntry* headOfList)
   return NULL;
 }
 
+// Append a new entry to an existing entry. If that pre-existing entry already has a valid next pointer, we move that to the newEntry
 void HashedStringEntry_Append(HashedStringEntry* parent, HashedStringEntry* newEntry)
 {
   if (parent && newEntry)
@@ -40,6 +45,9 @@ void HashedStringEntry_Append(HashedStringEntry* parent, HashedStringEntry* newE
       // Special-case, insert in middle of list
       HashedStringEntry* temp = parent->Next;
       parent->Next = newEntry;
+
+      // Don't want to handle reparenting newEntry's children
+      assert(newEntry->Next == NULL);
       newEntry->Next = temp;
     }
     else
@@ -49,6 +57,7 @@ void HashedStringEntry_Append(HashedStringEntry* parent, HashedStringEntry* newE
   }
 }
 
+// free a chain of entries
 void HashedStringEntry_Cleanup(HashedStringEntry* entry)
 {
   if (entry)
@@ -64,7 +73,17 @@ void HashedStringEntry_Cleanup(HashedStringEntry* entry)
 
 HashedStringMap* HashedStringMap_Create(uint32_t initialSize)
 {
-  return NULL;
+  HashedStringMap* newMap = (HashedStringMap*)malloc(sizeof(HashedStringMap));
+  if (newMap)
+  {
+    newMap->NumBuckets = initialSize;
+    newMap->NumElements = 0;
+    newMap->GrowthTrigger = (uint32_t)ceilf((float)initialSize * 0.75f);
+
+    // Allocate array of empty buckets
+    newMap->Buckets = (HashedStringEntry**)malloc(initialSize * sizeof(HashedStringEntry*));
+  }
+  return newMap;
 }
 
 HashedStringEntry* HashedStringMap_Insert(
@@ -77,6 +96,10 @@ HashedStringEntry* HashedStringMap_Insert(
   uint32_t stringLength
 )
 {
+  if (inMap && hashedString)
+  {
+    // TODO
+  }
   return NULL;
 }
 
@@ -88,5 +111,29 @@ HashedStringEntry* HashedStringMap_Find(
 #endif // HASHEDSTRING_ALLOW_CASE_INSENSITIVE
 )
 {
+  if (inMap && hashedString)
+  {
+#ifdef HASHEDSTRING_ALLOW_CASE_INSENSITIVE
+    const uint32_t hash = sensitivity == HSCS_Sensitive ? hashedString->Hash : hashedString->CommonHash;
+#else
+    const uint32_t hash = hashedString->Hash;
+#endif
+
+    // Get bucket index
+    const uint32_t index = hash % inMap->NumBuckets;
+    HashedStringEntry* entry = inMap->Buckets[index];
+    if (entry)
+    {
+      // Keep traversing list until entry->Key == hash or we run out of entries
+      while (entry->Key != hash && entry->Next)
+      {
+        entry = entry->Next;
+      }
+      if (entry)
+      {
+        return entry;
+      }
+    }
+  }
   return NULL;
 }
