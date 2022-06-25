@@ -67,7 +67,7 @@ workspace "hierarchical-tags"
 project "hierarchical-tags-lib"
         kind "StaticLib"
         language "C"
-        cdialect "C11"
+        cdialect "C17"
         exceptionhandling (EXCEPTIONS_ENABLED)
         rtti "Off"
         staticruntime (STATIC_RUNTIME)
