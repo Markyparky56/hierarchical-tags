@@ -12,18 +12,23 @@
 #include "xxhash.h"
 #endif // HASHEDSTRING_USE_CITYHASH
 
-#ifndef HASHEDSTRING_XXHASH_SEED
-// Random prime
-#define HASHEDSTRING_XXHASH_SEED 50177
-#endif // XXHASH_SEED
-
-static uint32_t HashString(const char* inString, size_t strLength)
+static hsHash_t HashString(const char* inString, size_t strLength)
 {
+// NOTE: Some of these functions accept a seed param, should that be exposed/used to improve hashing?
+
+#ifdef HASHEDSTRING_USE_32BIT
 #if HASHEDSTRING_USE_CITYHASH
   return CityHash32(inString, strLength);
 #else
-  return XXH32(inString, strLength, HASHEDSTRING_XXHASH_SEED);
-#endif
+  return XXH32(inString, strLength, 0);
+#endif // HASHEDSTRING_USE_CITYHASH
+#else
+#if HASHEDSTRING_USE_CITYHASH
+  return CityHash64(inString, strLength);
+#else
+  return XXH3_64bits(inString, strLength);
+#endif // HASHEDSTRING_USE_CITYHASH
+#endif // HASHEDSTRING_USE_32BIT
 }
 
 // Copy and convert at the same time
@@ -52,7 +57,7 @@ HashedString CreateHashedString(const char* inString)
   hStr.Hash = HashString(inString, strLength);
 
 #if HASHEDSTRING_ALLOW_CASE_INSENSITIVE
-  uint32_t lcaseHash = -1;
+  hsHash_t lcaseHash = -1;
   if (strLength < 256)
   {
     // Reasonable sized buffer

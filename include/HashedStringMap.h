@@ -13,7 +13,7 @@ typedef struct HashedStringEntry HashedStringEntry;
 struct HashedStringEntry
 {
   // Corresponding Hash
-  uint32_t Key;
+  hsHash_t Key;
   // Corresponding String
   char* String;
   uint32_t StringLength;

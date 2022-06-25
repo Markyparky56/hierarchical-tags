@@ -5,7 +5,7 @@
 #include <math.h>
 
 // Create a new HashedStringEntry given a key (hash) and the corresponding string
-static HashedStringEntry* HashedStringEntry_Create(uint32_t inKey, const char* inString)
+static HashedStringEntry* HashedStringEntry_Create(hsHash_t inKey, const char* inString)
 {
   HashedStringEntry* newEntry = (HashedStringEntry*)malloc(sizeof(HashedStringEntry));
   if (newEntry)
@@ -16,6 +16,7 @@ static HashedStringEntry* HashedStringEntry_Create(uint32_t inKey, const char* i
     {
       // Copy string
       newEntry->String = (char*)malloc(newEntry->StringLength * sizeof(char*));
+      assert(newEntry->String);
       strcpy_s(newEntry->String, newEntry->StringLength, inString);
     }
     else
@@ -94,7 +95,7 @@ static void HashedStringEntry_Cleanup(HashedStringEntry* entry)
   }
 }
 
-static uint32_t HashedStringMap_GetBucketIndex(HashedStringMap* inMap, const uint32_t hash)
+static uint32_t HashedStringMap_GetBucketIndex(HashedStringMap* inMap, const hsHash_t hash)
 {
   assert(inMap);
   return hash % inMap->NumBuckets;
@@ -223,7 +224,7 @@ static void HashedStringMap_GrowAndRebuild(HashedStringMap* inMap)
 
 static HashedStringEntry* HashedStringMap_AddInternal(
   HashedStringMap* inMap,
-  const uint32_t hash,
+  const hsHash_t hash,
   const uint32_t stringLength,
   const char* inString
 )
@@ -282,7 +283,7 @@ HashedStringEntry* HashedStringMap_FindOrAdd(
     // If one doesn't exist, add it
     if (!existingEntry)
     {
-      const uint32_t hash = hashedString->Hash;
+      const hsHash_t hash = hashedString->Hash;
       outEntry = HashedStringMap_AddInternal(inMap, hash, stringLength, inString);      
     }
     else
@@ -295,7 +296,7 @@ HashedStringEntry* HashedStringMap_FindOrAdd(
     HashedStringEntry* existingLCaseEntry = HashedStringMap_Find(inMap, hashedString, HSCS_Insensitive);
     if (!existingLCaseEntry)
     {
-      const uint32_t hash = hashedString->CommonHash;
+      const hsHash_t hash = hashedString->CommonHash;
       HashedStringEntry* lCaseEntry = HashedStringMap_AddInternal(inMap, hash, stringLength, inLCaseString);
       if (outLCaseEntry)
       {
@@ -322,9 +323,9 @@ HashedStringEntry* HashedStringMap_Find(
   if (inMap && hashedString)
   {
 #ifdef HASHEDSTRING_ALLOW_CASE_INSENSITIVE
-    const uint32_t hash = sensitivity == HSCS_Sensitive ? hashedString->Hash : hashedString->CommonHash;
+    const hsHash_t hash = sensitivity == HSCS_Sensitive ? hashedString->Hash : hashedString->CommonHash;
 #else
-    const uint32_t hash = hashedString->Hash;
+    const hsHash_t hash = hashedString->Hash;
 #endif
 
     // Get bucket index

@@ -7,6 +7,12 @@
 #define HASHEDSTRING_ALLOW_CASE_INSENSITIVE 1
 #endif // HASHEDSTRING_ALLOW_CASE_INSENSITIVE
 
+#ifndef HASHEDSTRING_USE_32BIT
+typedef uint64_t hsHash_t;
+#else
+typedef uint32_t hsHash_t;
+#endif
+
 typedef enum HashedStringCaseSensitivity HashedStringCaseSensitivity;
 enum HashedStringCaseSensitivity
 {
@@ -22,11 +28,11 @@ typedef struct HashedString HashedString;
 struct HashedString
 {
   // Unique identifier for this string
-  uint32_t Hash;
+  hsHash_t Hash;
 
 #if HASHEDSTRING_ALLOW_CASE_INSENSITIVE
   // Hash of lower-cased string
-  uint32_t CommonHash;
+  hsHash_t CommonHash;
 #endif // HASHEDSTRING_ALLOW_CASE_INSENSITIVE
 };
 
