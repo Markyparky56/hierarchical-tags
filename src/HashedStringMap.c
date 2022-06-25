@@ -11,8 +11,17 @@ static HashedStringEntry* HashedStringEntry_Create(uint32_t inKey, const char* i
   if (newEntry)
   {
     newEntry->Key = inKey;
-    newEntry->String = inString;
-    newEntry->StringLength = inString ? (uint32_t)strlen(inString) : 0;
+    newEntry->StringLength = inString ? (uint32_t)strlen(inString)+1 : 0;
+    if (newEntry->StringLength > 0)
+    {
+      // Copy string
+      newEntry->String = (char*)malloc(newEntry->StringLength * sizeof(char*));
+      strcpy_s(newEntry->String, newEntry->StringLength, inString);
+    }
+    else
+    {
+      newEntry->String = NULL;
+    }
     newEntry->Next = NULL;
 
     return newEntry;
@@ -76,6 +85,7 @@ static void HashedStringEntry_Cleanup(HashedStringEntry* entry)
   if (entry)
   {
     HashedStringEntry* next = entry->Next;
+    free(entry->String);
     free(entry);
     if (next)
     {
@@ -331,6 +341,23 @@ HashedStringEntry* HashedStringMap_Find(
       {
         return entry;
       }
+    }
+  }
+  return NULL;
+}
+
+const char* HashedStringMap_GetString(HashedStringMap* inMap, HashedString* hashedString)
+{
+  if (inMap && hashedString)
+  {
+    HashedStringEntry* entry = HashedStringMap_Find(inMap, hashedString
+#ifdef HASHEDSTRING_ALLOW_CASE_INSENSITIVE
+      , HSCS_Sensitive
+#endif
+    );
+    if (entry)
+    {
+      return entry->String;
     }
   }
   return NULL;

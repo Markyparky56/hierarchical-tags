@@ -15,7 +15,7 @@ struct HashedStringEntry
   // Corresponding Hash
   uint32_t Key;
   // Corresponding String
-  const char* String;
+  char* String;
   uint32_t StringLength;
 
   // Pointer to next HashedString in this bucket
@@ -54,7 +54,6 @@ HashedStringEntry* HashedStringMap_Find(
   , HashedStringCaseSensitivity sensitivity
 #endif // HASHEDSTRING_ALLOW_CASE_INSENSITIVE
 );
-// TODO: GetString
-
+const char* HashedStringMap_GetString(HashedStringMap* inMap, HashedString* hashedString);
 
 #endif // HASHEDSTRINGMAP_H

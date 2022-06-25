@@ -17,7 +17,7 @@
 #define HASHEDSTRING_XXHASH_SEED 50177
 #endif // XXHASH_SEED
 
-uint32_t HashString(const char* inString, size_t strLength)
+static uint32_t HashString(const char* inString, size_t strLength)
 {
 #if HASHEDSTRING_USE_CITYHASH
   return CityHash32(inString, strLength);
@@ -27,7 +27,7 @@ uint32_t HashString(const char* inString, size_t strLength)
 }
 
 // Copy and convert at the same time
-void StringToLowerCase(const char* srcString, char* dstString, size_t strLength)
+static void StringToLowerCase(const char* restrict srcString, char* restrict dstString, size_t strLength)
 {
   for (int i = 0; i < strLength; ++i)
   {
@@ -48,21 +48,21 @@ HashedString CreateHashedString(const char* inString)
     return hStr;
   }
 
-  const size_t strLength = strlen(inString);
+  const size_t strLength = strlen(inString)+1;
   hStr.Hash = HashString(inString, strLength);
 
 #if HASHEDSTRING_ALLOW_CASE_INSENSITIVE
   uint32_t lcaseHash = -1;
-  if (strLength < 1024)
+  if (strLength < 256)
   {
     // Reasonable sized buffer
-    char lcaseString[1024];
+    char lcaseString[256];
     StringToLowerCase(inString, lcaseString, strLength);
     lcaseHash = HashString(lcaseString, strLength);
   }
   else
   {
-    // Scary long string requires dynamic alloc
+    // long string requires dynamic alloc
     char* lcaseStr = (char*)malloc(strLength);
     if (lcaseStr != NULL)
     {
