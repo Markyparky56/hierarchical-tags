@@ -36,14 +36,16 @@ struct HashedStringMap
 };
 
 HashedStringMap* HashedStringMap_Create(uint32_t initialSize);
-HashedStringEntry* HashedStringMap_Insert(
+void HashedStringMap_Cleanup(HashedStringMap* inMap);
+HashedStringEntry* HashedStringMap_FindOrAdd(
   HashedStringMap* inMap, 
   HashedString* hashedString, 
+  const uint32_t stringLength,
   const char* inString, 
 #ifdef HASHEDSTRING_ALLOW_CASE_INSENSITIVE
   const char* inLCaseString, 
+  HashedStringEntry** outLCaseEntry
 #endif // HASHEDSTRING_ALLOW_CASE_INSENSITIVE 
-  uint32_t stringLength
 );
 HashedStringEntry* HashedStringMap_Find(
   HashedStringMap* inMap, 
@@ -52,6 +54,7 @@ HashedStringEntry* HashedStringMap_Find(
   , HashedStringCaseSensitivity sensitivity
 #endif // HASHEDSTRING_ALLOW_CASE_INSENSITIVE
 );
+// TODO: GetString
 
 
 #endif // HASHEDSTRINGMAP_H

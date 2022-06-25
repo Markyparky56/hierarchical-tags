@@ -12,9 +12,9 @@
 #include "xxhash.h"
 #endif // HASHEDSTRING_USE_CITYHASH
 
-#ifndef XXHASH_SEED
+#ifndef HASHEDSTRING_XXHASH_SEED
 // Random prime
-#define XXHASH_SEED 50177
+#define HASHEDSTRING_XXHASH_SEED 50177
 #endif // XXHASH_SEED
 
 uint32_t HashString(const char* inString, size_t strLength)
@@ -22,7 +22,7 @@ uint32_t HashString(const char* inString, size_t strLength)
 #if HASHEDSTRING_USE_CITYHASH
   return CityHash32(inString, strLength);
 #else
-  return XXH32(inString, strLength, XXHASH_SEED);
+  return XXH32(inString, strLength, HASHEDSTRING_XXHASH_SEED);
 #endif
 }
 
