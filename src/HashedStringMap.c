@@ -128,19 +128,27 @@ HashedStringMap* HashedStringMap_Create(uint32_t initialSize)
   HashedStringMap* newMap = (HashedStringMap*)malloc(sizeof(HashedStringMap));
   if (newMap)
   {
-    newMap->NumBuckets = initialSize;
-    newMap->NumElements = 0;
-    newMap->GrowthTrigger = HashedStringMap_GetGrowthTrigger(initialSize);
-
-    // Allocate array of empty (NULL) buckets
-    newMap->Buckets = (HashedStringEntry**)malloc(initialSize * sizeof(HashedStringEntry*));
-    assert(newMap->Buckets);
-    for (uint32_t b = 0; b < initialSize; ++b)
-    {
-      newMap->Buckets[b] = NULL;
-    }
+    HashedStringMap_Init(newMap, initialSize);
   }
   return newMap;
+}
+
+void HashedStringMap_Init(HashedStringMap* inMap, uint32_t initialSize)
+{
+  assert(inMap);
+  assert(initialSize > 0);
+
+  inMap->NumBuckets = initialSize;
+  inMap->NumElements = 0;
+  inMap->GrowthTrigger = HashedStringMap_GetGrowthTrigger(initialSize);
+
+  // Allocate array of empty (NULL) buckets
+  inMap->Buckets = (HashedStringEntry**)malloc(initialSize * sizeof(HashedStringEntry*));
+  assert(inMap->Buckets);
+  for (uint32_t b = 0; b < initialSize; ++b)
+  {
+    inMap->Buckets[b] = NULL;
+  }
 }
 
 void HashedStringMap_Cleanup(HashedStringMap* inMap)

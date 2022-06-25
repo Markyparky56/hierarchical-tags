@@ -36,6 +36,6 @@ struct HashedString
 #endif // HASHEDSTRING_ALLOW_CASE_INSENSITIVE
 };
 
-HashedString CreateHashedString(const char* inString);
+HashedString HashedString_Create(const char* inString);
 
 #endif // HASHEDSTRING_H

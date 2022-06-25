@@ -1,5 +1,8 @@
 #include "HashedString.h"
+#include "HashedStringMap.h"
 
+#include <stdbool.h>
+#include <stdalign.h>
 #include <stdlib.h>
 #include <string.h>
 #if HASHEDSTRING_ALLOW_CASE_INSENSITIVE
@@ -11,6 +14,35 @@
 #else
 #include "xxhash.h"
 #endif // HASHEDSTRING_USE_CITYHASH
+
+#ifndef HASHEDSTRING_MAP_INITIALSIZE
+#define HASHEDSTRING_MAP_INITIALSIZE 16
+#endif
+
+static bool bCreatedHashedStringMapSingleton = false;
+alignas(HashedStringMap) static uint8_t HashedStringMapSingletonData[sizeof(HashedStringMap)];
+
+static HashedStringMap* GetHashedStringMap()
+{
+  HashedStringMap* hashedStringMapSingleton = (HashedStringMap*)HashedStringMapSingletonData;
+
+  if (bCreatedHashedStringMapSingleton)
+  {
+    return hashedStringMapSingleton;
+  }
+  else
+  {
+    HashedStringMap_Init(hashedStringMapSingleton, HASHEDSTRING_MAP_INITIALSIZE);
+    bCreatedHashedStringMapSingleton = true;
+    return hashedStringMapSingleton;
+  }
+}
+
+static HashedStringMap* GetHashedStringMapUnchecked()
+{
+  HashedStringMap* hashedStringMapSingleton = (HashedStringMap*)HashedStringMapSingletonData;
+  return hashedStringMapSingleton;
+}
 
 static hsHash_t HashString(const char* inString, size_t strLength)
 {
@@ -42,7 +74,7 @@ static void StringToLowerCase(const char* restrict srcString, char* restrict dst
   }
 }
 
-HashedString CreateHashedString(const char* inString)
+HashedString HashedString_Create(const char* inString)
 {
   HashedString hStr;
 
@@ -57,29 +89,40 @@ HashedString CreateHashedString(const char* inString)
   hStr.Hash = HashString(inString, strLength);
 
 #if HASHEDSTRING_ALLOW_CASE_INSENSITIVE
-  hsHash_t lcaseHash = -1;
+  hsHash_t lCaseHash = 0;
   if (strLength < 256)
   {
     // Reasonable sized buffer
-    char lcaseString[256];
-    StringToLowerCase(inString, lcaseString, strLength);
-    lcaseHash = HashString(lcaseString, strLength);
+    char lCaseString[256];
+    StringToLowerCase(inString, lCaseString, strLength);
+    lCaseHash = HashString(lCaseString, strLength);
+
+    // Add to map for later look-up
+    HashedStringMap* stringMap = GetHashedStringMap();
+    HashedStringMap_FindOrAdd(stringMap, &hStr, (uint32_t)strLength, inString, lCaseString, NULL);
   }
   else
   {
     // long string requires dynamic alloc
-    char* lcaseStr = (char*)malloc(strLength);
-    if (lcaseStr != NULL)
+    char* lCaseString = (char*)malloc(strLength);
+    if (lCaseString != NULL)
     {
-      StringToLowerCase(inString, lcaseStr, strLength);
+      StringToLowerCase(inString, lCaseString, strLength);
     }
-    lcaseHash = HashString(lcaseStr, strLength);
-    free(lcaseStr);
-  }
-  hStr.CommonHash = lcaseHash;
-#endif
+    lCaseHash = HashString(lCaseString, strLength);
 
-  // TODO: Add string(s) to table
+    // Add to map for later look-up
+    HashedStringMap* stringMap = GetHashedStringMap();
+    HashedStringMap_FindOrAdd(stringMap, &hStr, (uint32_t)strLength, inString, lCaseString, NULL);
+
+    free(lCaseString);
+  }
+  hStr.CommonHash = lCaseHash;
+#else
+  // Add to map for later look-up
+  HashedStringMap* stringMap = GetHashedStringMap();
+  HashedStringMap_FindOrAdd(stringMap, &hStr, strLength, inString);
+#endif
 
   return hStr;
 }

@@ -36,6 +36,7 @@ struct HashedStringMap
 };
 
 HashedStringMap* HashedStringMap_Create(uint32_t initialSize);
+void HashedStringMap_Init(HashedStringMap* inMap, uint32_t initialSize);
 void HashedStringMap_Cleanup(HashedStringMap* inMap);
 HashedStringEntry* HashedStringMap_FindOrAdd(
   HashedStringMap* inMap, 
