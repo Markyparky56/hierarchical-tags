@@ -22,6 +22,7 @@ To-Do List:
 - Ability to load tags in bulk
 - MORE & BETTER TESTS
 - C++ Wrapper
+- Wide-char (`wchar_t`) support?
 
 Future-Concerns:
 - Storing the Hash directly in `HashedString` could impact cache performance with 2 64bit hashes per structure. 
