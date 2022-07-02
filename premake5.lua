@@ -5,26 +5,7 @@ if _OPTIONS["cc"] ~= nil then
     BUILD_DIR = BUILD_DIR .. "_" .. _OPTIONS["cc"]
 end
 
-newoption {
-    trigger = "with-exceptions",
-    description = "Exceptions Always Enabled? (ON/OFF)"
-}
-local EXCEPTIONS_ENABLED = "Off"
-if _OPTIONS["with-exceptions"] ~= nil then
-    EXCEPTIONS_ENABLED = "On"
-end
 
-newoption {
-    trigger = "dynamic-runtime",
-    description = "Should use dynamically linked runtime?"
-}
-local STATIC_RUNTIME = "On"
-if _OPTIONS["dynamic-runtime"] ~= nil then
-    STATIC_RUNTIME = "Off"
-end
-
-local SRC_DIR = "src/"
-local INCLUDE_DIR = "include/"
 
 workspace "hierarchical-tags"
     location (BUILD_DIR)
@@ -64,28 +45,5 @@ workspace "hierarchical-tags"
         buildoptions { "/Zc:__cplusplus" }
         flags { "MultiProcessorCompile" }
 
-project "hierarchical-tags-lib"
-        kind "StaticLib"
-        language "C"
-        cdialect "C17"
-        exceptionhandling (EXCEPTIONS_ENABLED)
-        rtti "Off"
-        staticruntime (STATIC_RUNTIME)
-        files
-        {
-            path.join(SRC_DIR, "**.c"),
-            path.join(INCLUDE_DIR, "**.h")
-        }
-        includedirs
-        {
-            (INCLUDE_DIR),
-            path.join("cityhash", "src"),
-            "xxHash"
-        }
-        links { "cityhash-c", "libxxhash" }
-
--- project "hierarchical-tags-tests"
---         kind ""
-
-include "cityhash/cityhash-clib.lua"
-include "xxHash/premake_unofficial/xxhash.lua"
+include "htags-lib.lua"
+include "htags-tests.lua"

@@ -22,8 +22,11 @@ enum HashedStringCaseSensitivity
 #endif // HASHEDSTRING_ALLOW_CASE_INSENSITIVE
 };
 
-
 typedef struct HashedString HashedString;
+
+#ifndef HASHEDSTRING_NO_SHORTTYPEDEFS
+typedef HashedString HString;
+#endif
 
 struct HashedString
 {
@@ -37,5 +40,6 @@ struct HashedString
 };
 
 HashedString HashedString_Create(const char* inString);
+const char* HashedString_GetString(HashedString* inHashedString);
 
 #endif // HASHEDSTRING_H

@@ -40,8 +40,7 @@ void HashedStringMap_Init(HashedStringMap* inMap, uint32_t initialSize);
 void HashedStringMap_Cleanup(HashedStringMap* inMap);
 HashedStringEntry* HashedStringMap_FindOrAdd(
   HashedStringMap* inMap, 
-  HashedString* hashedString, 
-  const uint32_t stringLength,
+  HashedString* hashedString,
   const char* inString, 
 #ifdef HASHEDSTRING_ALLOW_CASE_INSENSITIVE
   const char* inLCaseString, 

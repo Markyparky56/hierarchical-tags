@@ -1,4 +1,5 @@
 #include "HashedStringMap.h"
+#include "StringUtil.h"
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
@@ -11,13 +12,12 @@ static HashedStringEntry* HashedStringEntry_Create(hsHash_t inKey, const char* i
   if (newEntry)
   {
     newEntry->Key = inKey;
-    newEntry->StringLength = inString ? (uint32_t)strlen(inString)+1 : 0;
-    if (newEntry->StringLength > 0)
+    const size_t stringLength = inString ? strlen(inString)+1 : 0;
+    if (stringLength > 0)
     {
       // Copy string
-      newEntry->String = (char*)malloc(newEntry->StringLength * sizeof(char*));
+      newEntry->String = strdup(inString);
       assert(newEntry->String);
-      strcpy_s(newEntry->String, newEntry->StringLength, inString);
     }
     else
     {
@@ -118,6 +118,8 @@ static HashedStringEntry** HashedStringMap_GetBucketPtr(HashedStringMap* inMap, 
 static uint32_t HashedStringMap_GetGrowthTrigger(uint32_t size)
 {
   // Grow when 3/4ths full
+  // NOTE: Since we can't ensure every entry will get its own bucket, to minimise the length of internal 
+  // bucket lists, we grow the map "early", spreading entries out again
   return (uint32_t)ceilf((float)size * 0.75f);
 }
 
@@ -143,11 +145,11 @@ void HashedStringMap_Init(HashedStringMap* inMap, uint32_t initialSize)
   inMap->GrowthTrigger = HashedStringMap_GetGrowthTrigger(initialSize);
 
   // Allocate array of empty (NULL) buckets
-  inMap->Buckets = (HashedStringEntry**)malloc(initialSize * sizeof(HashedStringEntry*));
-  assert(inMap->Buckets);
-  for (uint32_t b = 0; b < initialSize; ++b)
+  const size_t allocSize = initialSize * sizeof(HashedStringEntry*);
+  inMap->Buckets = (HashedStringEntry**)malloc(allocSize);
+  if (inMap->Buckets)
   {
-    inMap->Buckets[b] = NULL;
+    memset(inMap->Buckets, 0, allocSize);
   }
 }
 
@@ -233,7 +235,6 @@ static void HashedStringMap_GrowAndRebuild(HashedStringMap* inMap)
 static HashedStringEntry* HashedStringMap_AddInternal(
   HashedStringMap* inMap,
   const hsHash_t hash,
-  const uint32_t stringLength,
   const char* inString
 )
 {
@@ -270,7 +271,6 @@ static HashedStringEntry* HashedStringMap_AddInternal(
 HashedStringEntry* HashedStringMap_FindOrAdd(
   HashedStringMap* inMap,
   HashedString* hashedString,
-  const uint32_t stringLength,
   const char* inString,
 #ifdef HASHEDSTRING_ALLOW_CASE_INSENSITIVE
   const char* inLCaseString,
@@ -288,11 +288,12 @@ HashedStringEntry* HashedStringMap_FindOrAdd(
       , HSCS_Sensitive
 #endif
     );
+
     // If one doesn't exist, add it
     if (!existingEntry)
     {
       const hsHash_t hash = hashedString->Hash;
-      outEntry = HashedStringMap_AddInternal(inMap, hash, stringLength, inString);      
+      outEntry = HashedStringMap_AddInternal(inMap, hash, inString);      
     }
     else
     {
@@ -305,7 +306,7 @@ HashedStringEntry* HashedStringMap_FindOrAdd(
     if (!existingLCaseEntry)
     {
       const hsHash_t hash = hashedString->CommonHash;
-      HashedStringEntry* lCaseEntry = HashedStringMap_AddInternal(inMap, hash, stringLength, inLCaseString);
+      HashedStringEntry* lCaseEntry = HashedStringMap_AddInternal(inMap, hash, inLCaseString);
       if (outLCaseEntry)
       {
         *outLCaseEntry = lCaseEntry;
@@ -316,6 +317,7 @@ HashedStringEntry* HashedStringMap_FindOrAdd(
       *outLCaseEntry = existingLCaseEntry;
     }
 #endif
+    return outEntry;
   }
   return NULL;
 }
@@ -339,18 +341,13 @@ HashedStringEntry* HashedStringMap_Find(
     // Get bucket index
     const uint32_t bucketIndex = HashedStringMap_GetBucketIndex(inMap, hash);
     HashedStringEntry* entry = HashedStringMap_GetBucket(inMap, bucketIndex);
-    if (entry)
+    
+    // Traverse list until entry->Key == hash or we run out of entries
+    while (entry && entry->Key != hash)
     {
-      // Keep traversing list until entry->Key == hash or we run out of entries
-      while (entry->Key != hash && entry->Next)
-      {
-        entry = entry->Next;
-      }
-      if (entry)
-      {
-        return entry;
-      }
+      entry = entry->Next;
     }
+    return entry;
   }
   return NULL;
 }

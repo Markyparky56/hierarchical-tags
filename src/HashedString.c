@@ -99,7 +99,7 @@ HashedString HashedString_Create(const char* inString)
 
     // Add to map for later look-up
     HashedStringMap* stringMap = GetHashedStringMap();
-    HashedStringMap_FindOrAdd(stringMap, &hStr, (uint32_t)strLength, inString, lCaseString, NULL);
+    HashedStringMap_FindOrAdd(stringMap, &hStr, inString, lCaseString, NULL);
   }
   else
   {
@@ -113,7 +113,7 @@ HashedString HashedString_Create(const char* inString)
 
     // Add to map for later look-up
     HashedStringMap* stringMap = GetHashedStringMap();
-    HashedStringMap_FindOrAdd(stringMap, &hStr, (uint32_t)strLength, inString, lCaseString, NULL);
+    HashedStringMap_FindOrAdd(stringMap, &hStr, inString, lCaseString, NULL);
 
     free(lCaseString);
   }
@@ -121,8 +121,19 @@ HashedString HashedString_Create(const char* inString)
 #else
   // Add to map for later look-up
   HashedStringMap* stringMap = GetHashedStringMap();
-  HashedStringMap_FindOrAdd(stringMap, &hStr, strLength, inString);
+  HashedStringMap_FindOrAdd(stringMap, &hStr, inString);
 #endif
 
   return hStr;
+}
+
+const char* HashedString_GetString(HashedString* inHashedString)
+{
+  if (inHashedString)
+  {
+    HashedStringMap* stringMap = GetHashedStringMap();
+    const char* str = HashedStringMap_GetString(stringMap, inHashedString);
+    return str;
+  }
+  return NULL;
 }
