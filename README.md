@@ -21,6 +21,7 @@ To-Do List:
 - Option to override default tag-seperator
 - Ability to load tags in bulk
 - MORE & BETTER TESTS
+- C++ Wrapper
 
 Future-Concerns:
 - Storing the Hash directly in `HashedString` could impact cache performance with 2 64bit hashes per structure. 
