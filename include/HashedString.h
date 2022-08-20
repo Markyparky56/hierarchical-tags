@@ -2,6 +2,7 @@
 #define HASHEDSTRING_H
 
 #include <stdint.h>
+#include <stdbool.h>
 
 #ifndef HASHEDSTRING_ALLOW_CASE_INSENSITIVE
 #define HASHEDSTRING_ALLOW_CASE_INSENSITIVE 1
@@ -22,10 +23,10 @@ enum HashedStringCaseSensitivity
 #endif // HASHEDSTRING_ALLOW_CASE_INSENSITIVE
 };
 
-typedef struct HashedString HashedString;
+typedef struct HashedString HashedString_t;
 
 #ifndef HASHEDSTRING_NO_SHORTTYPEDEFS
-typedef HashedString HString;
+typedef HashedString_t HString;
 #endif
 
 struct HashedString
@@ -39,7 +40,13 @@ struct HashedString
 #endif // HASHEDSTRING_ALLOW_CASE_INSENSITIVE
 };
 
-HashedString HashedString_Create(const char* inString);
-const char* HashedString_GetString(HashedString* inHashedString);
+HashedString_t HashedString_Create(const char* inString);
+const char* HashedString_GetString(const HashedString_t* inHashedString);
+
+// Compare, case-sensitive
+bool HashedString_Compare(const HashedString_t* lhs, const HashedString_t* rhs);
+// Compare given sensitivity
+bool HashedString_Compare_WithSensitivity(const HashedString_t* lhs, const HashedString_t* rhs, const HashedStringCaseSensitivity sensitivity);
+
 
 #endif // HASHEDSTRING_H

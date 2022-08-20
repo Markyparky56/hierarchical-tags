@@ -7,9 +7,8 @@
 // Default Map Growth Ratio
 #define GoldenRatio (1.618033988749894f)
 
-typedef struct HashedStringEntry HashedStringEntry;
-
 // Key-Value intrusive-linked list container
+typedef struct HashedStringEntry HashedStringEntry_t;
 struct HashedStringEntry
 {
   // Corresponding Hash
@@ -19,10 +18,10 @@ struct HashedStringEntry
   uint32_t StringLength;
 
   // Pointer to next HashedString in this bucket
-  HashedStringEntry* Next;
+  struct HashedStringEntry* Next;
 };
 
-typedef struct HashedStringMap HashedStringMap;
+typedef struct HashedStringMap HashedStringMap_t;
 struct HashedStringMap
 {
   // How many buckets we have, used to modulo key to find index
@@ -32,28 +31,28 @@ struct HashedStringMap
   // When NumElements equals this value we grow the number of buckets, reallocate, and redistribute the map's contents
   uint32_t GrowthTrigger;
 
-  HashedStringEntry** Buckets;
+  struct HashedStringEntry** Buckets;
 };
 
-HashedStringMap* HashedStringMap_Create(uint32_t initialSize);
-void HashedStringMap_Init(HashedStringMap* inMap, uint32_t initialSize);
-void HashedStringMap_Cleanup(HashedStringMap* inMap);
-HashedStringEntry* HashedStringMap_FindOrAdd(
-  HashedStringMap* inMap, 
-  HashedString* hashedString,
+HashedStringMap_t* HashedStringMap_Create(uint32_t initialSize);
+void HashedStringMap_Init(HashedStringMap_t* inMap, uint32_t initialSize);
+void HashedStringMap_Cleanup(HashedStringMap_t* inMap);
+HashedStringEntry_t* HashedStringMap_FindOrAdd(
+  HashedStringMap_t* inMap,
+  HashedString_t* hashedString,
   const char* inString, 
 #ifdef HASHEDSTRING_ALLOW_CASE_INSENSITIVE
   const char* inLCaseString, 
-  HashedStringEntry** outLCaseEntry
+  HashedStringEntry_t** outLCaseEntry
 #endif // HASHEDSTRING_ALLOW_CASE_INSENSITIVE 
 );
-HashedStringEntry* HashedStringMap_Find(
-  HashedStringMap* inMap, 
-  HashedString* hashedString
+HashedStringEntry_t* HashedStringMap_Find(
+  HashedStringMap_t* inMap,
+  const HashedString_t* hashedString
 #ifdef HASHEDSTRING_ALLOW_CASE_INSENSITIVE
   , HashedStringCaseSensitivity sensitivity
 #endif // HASHEDSTRING_ALLOW_CASE_INSENSITIVE
 );
-const char* HashedStringMap_GetString(HashedStringMap* inMap, HashedString* hashedString);
+const char* HashedStringMap_GetString(HashedStringMap_t* inMap, const HashedString_t* hashedString);
 
 #endif // HASHEDSTRINGMAP_H

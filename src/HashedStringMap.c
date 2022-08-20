@@ -6,9 +6,9 @@
 #include <math.h>
 
 // Create a new HashedStringEntry given a key (hash) and the corresponding string
-static HashedStringEntry* HashedStringEntry_Create(hsHash_t inKey, const char* inString)
+static HashedStringEntry_t* HashedStringEntry_Create(hsHash_t inKey, const char* inString)
 {
-  HashedStringEntry* newEntry = (HashedStringEntry*)malloc(sizeof(HashedStringEntry));
+  HashedStringEntry_t* newEntry = (HashedStringEntry_t*)malloc(sizeof(HashedStringEntry_t));
   if (newEntry)
   {
     newEntry->Key = inKey;
@@ -32,11 +32,11 @@ static HashedStringEntry* HashedStringEntry_Create(hsHash_t inKey, const char* i
 }
 
 // Get the last entry in a list of entries
-static HashedStringEntry* HashedStringEntry_GetEnd(HashedStringEntry* headOfList)
+static HashedStringEntry_t* HashedStringEntry_GetEnd(HashedStringEntry_t* headOfList)
 {
   if (headOfList)
   {
-    HashedStringEntry* endPtr = headOfList;
+    HashedStringEntry_t* endPtr = headOfList;
     while (headOfList->Next)
     {
       endPtr = headOfList->Next;
@@ -48,14 +48,14 @@ static HashedStringEntry* HashedStringEntry_GetEnd(HashedStringEntry* headOfList
 }
 
 // Append a new entry to an existing entry. If that pre-existing entry already has a valid next pointer, we move that to the newEntry
-static void HashedStringEntry_Append(HashedStringEntry* parent, HashedStringEntry* newEntry)
+static void HashedStringEntry_Append(HashedStringEntry_t* parent, HashedStringEntry_t* newEntry)
 {
   if (parent && newEntry)
   {
     if (parent->Next)
     {
       // Special-case, insert in middle of list
-      HashedStringEntry* temp = parent->Next;
+      HashedStringEntry_t* temp = parent->Next;
       parent->Next = newEntry;
 
       // Don't want to handle reparenting newEntry's children
@@ -70,22 +70,22 @@ static void HashedStringEntry_Append(HashedStringEntry* parent, HashedStringEntr
 }
 
 // Find end of list, set as next
-static void HashedStringEntry_AppendEnd(HashedStringEntry* entry, HashedStringEntry* newEntry)
+static void HashedStringEntry_AppendEnd(HashedStringEntry_t* entry, HashedStringEntry_t* newEntry)
 {
   if (entry && newEntry)
   {
-    HashedStringEntry* end = HashedStringEntry_GetEnd(entry);
+    HashedStringEntry_t* end = HashedStringEntry_GetEnd(entry);
     assert(end);
     end->Next = newEntry;
   }
 }
 
 // free a chain of entries
-static void HashedStringEntry_Cleanup(HashedStringEntry* entry)
+static void HashedStringEntry_Cleanup(HashedStringEntry_t* entry)
 {
   if (entry)
   {
-    HashedStringEntry* next = entry->Next;
+    HashedStringEntry_t* next = entry->Next;
     free(entry->String);
     free(entry);
     if (next)
@@ -95,21 +95,21 @@ static void HashedStringEntry_Cleanup(HashedStringEntry* entry)
   }
 }
 
-static uint32_t HashedStringMap_GetBucketIndex(HashedStringMap* inMap, const hsHash_t hash)
+static uint32_t HashedStringMap_GetBucketIndex(HashedStringMap_t* inMap, const hsHash_t hash)
 {
   assert(inMap);
   return hash % inMap->NumBuckets;
 }
 
 // Get head entry in bucket
-static HashedStringEntry* HashedStringMap_GetBucket(HashedStringMap* inMap, const uint32_t index)
+static HashedStringEntry_t* HashedStringMap_GetBucket(HashedStringMap_t* inMap, const uint32_t index)
 {
   assert(inMap);
   return inMap->Buckets[index];
 }
 
 // Get pointer bucket resides in, useful if bucket is empty
-static HashedStringEntry** HashedStringMap_GetBucketPtr(HashedStringMap* inMap, const uint32_t index)
+static HashedStringEntry_t** HashedStringMap_GetBucketPtr(HashedStringMap_t* inMap, const uint32_t index)
 {
   assert(inMap);
   return &inMap->Buckets[index];
@@ -123,11 +123,11 @@ static uint32_t HashedStringMap_GetGrowthTrigger(uint32_t size)
   return (uint32_t)ceilf((float)size * 0.75f);
 }
 
-HashedStringMap* HashedStringMap_Create(uint32_t initialSize)
+HashedStringMap_t* HashedStringMap_Create(uint32_t initialSize)
 {
   assert(initialSize > 0);
 
-  HashedStringMap* newMap = (HashedStringMap*)malloc(sizeof(HashedStringMap));
+  HashedStringMap_t* newMap = (HashedStringMap_t*)malloc(sizeof(HashedStringMap_t));
   if (newMap)
   {
     HashedStringMap_Init(newMap, initialSize);
@@ -135,7 +135,7 @@ HashedStringMap* HashedStringMap_Create(uint32_t initialSize)
   return newMap;
 }
 
-void HashedStringMap_Init(HashedStringMap* inMap, uint32_t initialSize)
+void HashedStringMap_Init(HashedStringMap_t* inMap, uint32_t initialSize)
 {
   assert(inMap);
   assert(initialSize > 0);
@@ -145,21 +145,21 @@ void HashedStringMap_Init(HashedStringMap* inMap, uint32_t initialSize)
   inMap->GrowthTrigger = HashedStringMap_GetGrowthTrigger(initialSize);
 
   // Allocate array of empty (NULL) buckets
-  const size_t allocSize = initialSize * sizeof(HashedStringEntry*);
-  inMap->Buckets = (HashedStringEntry**)malloc(allocSize);
+  const size_t allocSize = initialSize * sizeof(HashedStringEntry_t*);
+  inMap->Buckets = (HashedStringEntry_t**)malloc(allocSize);
   if (inMap->Buckets)
   {
     memset(inMap->Buckets, 0, allocSize);
   }
 }
 
-void HashedStringMap_Cleanup(HashedStringMap* inMap)
+void HashedStringMap_Cleanup(HashedStringMap_t* inMap)
 {
   if (inMap)
   {
     for (uint32_t i = 0; i < inMap->NumBuckets; ++i)
     {
-      HashedStringEntry* bucket = inMap->Buckets[i];
+      HashedStringEntry_t* bucket = inMap->Buckets[i];
       if (bucket)
       {
         HashedStringEntry_Cleanup(bucket);
@@ -170,7 +170,7 @@ void HashedStringMap_Cleanup(HashedStringMap* inMap)
   }  
 }
 
-static void HashedStringMap_GrowAndRebuild(HashedStringMap* inMap)
+static void HashedStringMap_GrowAndRebuild(HashedStringMap_t* inMap)
 {
   assert(inMap);
   const uint32_t numBuckets = inMap->NumBuckets;
@@ -178,7 +178,7 @@ static void HashedStringMap_GrowAndRebuild(HashedStringMap* inMap)
   assert(newNumBuckets > 0);
 
   // Allocate new buckets array, set all to NULL initially
-  HashedStringEntry** newBuckets = (HashedStringEntry**)malloc(newNumBuckets * sizeof(HashedStringEntry*));
+  HashedStringEntry_t** newBuckets = (HashedStringEntry_t**)malloc(newNumBuckets * sizeof(HashedStringEntry_t*));
   assert(newBuckets);
   for (uint32_t b = 0; b < newNumBuckets; ++b)
   {
@@ -186,7 +186,7 @@ static void HashedStringMap_GrowAndRebuild(HashedStringMap* inMap)
   }
 
   // Swap buckets pointers
-  HashedStringEntry** oldBuckets = inMap->Buckets;
+  HashedStringEntry_t** oldBuckets = inMap->Buckets;
   inMap->Buckets = newBuckets;
   inMap->NumBuckets = newNumBuckets;
 
@@ -196,11 +196,11 @@ static void HashedStringMap_GrowAndRebuild(HashedStringMap* inMap)
   // For each existing bucket, insert each entry into new buckets
   for (uint32_t b = 0; b < numBuckets; ++b)
   {
-    HashedStringEntry* oldBucket = oldBuckets[b];
+    HashedStringEntry_t* oldBucket = oldBuckets[b];
     if (oldBucket)
     {
-      HashedStringEntry* entryToMove = oldBucket;
-      HashedStringEntry* nextInBucket = NULL;
+      HashedStringEntry_t* entryToMove = oldBucket;
+      HashedStringEntry_t* nextInBucket = NULL;
       do
       {
         // Unlink entryToMove, next preserved in nextInBucket
@@ -209,7 +209,7 @@ static void HashedStringMap_GrowAndRebuild(HashedStringMap* inMap)
 
         // Find new bucket index
         const uint32_t bucketIndex = HashedStringMap_GetBucketIndex(inMap, entryToMove->Key);
-        HashedStringEntry* newBucket = HashedStringMap_GetBucket(inMap, bucketIndex);
+        HashedStringEntry_t* newBucket = HashedStringMap_GetBucket(inMap, bucketIndex);
 
         // If valid, bucket already has something in it, append
         if (newBucket)
@@ -218,7 +218,7 @@ static void HashedStringMap_GrowAndRebuild(HashedStringMap* inMap)
         }
         else // Make this entry the new head
         {
-          HashedStringEntry** newBucketPtr = HashedStringMap_GetBucketPtr(inMap, bucketIndex);
+          HashedStringEntry_t** newBucketPtr = HashedStringMap_GetBucketPtr(inMap, bucketIndex);
           *newBucketPtr = entryToMove;
         }
 
@@ -232,8 +232,8 @@ static void HashedStringMap_GrowAndRebuild(HashedStringMap* inMap)
   free(oldBuckets);
 }
 
-static HashedStringEntry* HashedStringMap_AddInternal(
-  HashedStringMap* inMap,
+static HashedStringEntry_t* HashedStringMap_AddInternal(
+  HashedStringMap_t* inMap,
   const hsHash_t hash,
   const char* inString
 )
@@ -241,12 +241,12 @@ static HashedStringEntry* HashedStringMap_AddInternal(
   assert(inMap);
 
   // Make new entry
-  HashedStringEntry* newEntry = HashedStringEntry_Create(hash, inString);
+  HashedStringEntry_t* newEntry = HashedStringEntry_Create(hash, inString);
   assert(newEntry);
 
   // Find bucket
   const uint32_t bucketIndex = HashedStringMap_GetBucketIndex(inMap, hash);
-  HashedStringEntry* entry = HashedStringMap_GetBucket(inMap, bucketIndex);
+  HashedStringEntry_t* entry = HashedStringMap_GetBucket(inMap, bucketIndex);
   if (entry)
   {
     // Bucket already in use, find end and append
@@ -254,7 +254,7 @@ static HashedStringEntry* HashedStringMap_AddInternal(
   }
   else // Bucket is empty, set as head of bucket
   {
-    HashedStringEntry** bucketPtr = HashedStringMap_GetBucketPtr(inMap, bucketIndex);
+    HashedStringEntry_t** bucketPtr = HashedStringMap_GetBucketPtr(inMap, bucketIndex);
     assert(bucketPtr);
     *bucketPtr = newEntry;
   }
@@ -268,22 +268,22 @@ static HashedStringEntry* HashedStringMap_AddInternal(
   return newEntry;
 }
 
-HashedStringEntry* HashedStringMap_FindOrAdd(
-  HashedStringMap* inMap,
-  HashedString* hashedString,
+HashedStringEntry_t* HashedStringMap_FindOrAdd(
+  HashedStringMap_t* inMap,
+  HashedString_t* hashedString,
   const char* inString,
 #ifdef HASHEDSTRING_ALLOW_CASE_INSENSITIVE
   const char* inLCaseString,
-  HashedStringEntry** outLCaseEntry
+  HashedStringEntry_t** outLCaseEntry
 #endif // HASHEDSTRING_ALLOW_CASE_INSENSITIVE
 )
 {
   if (inMap && hashedString)
   {
-    HashedStringEntry* outEntry;
+    HashedStringEntry_t* outEntry;
 
     // Try find case-sensitive entry
-    HashedStringEntry* existingEntry = HashedStringMap_Find(inMap, hashedString
+    HashedStringEntry_t* existingEntry = HashedStringMap_Find(inMap, hashedString
 #ifdef HASHEDSTRING_ALLOW_CASE_INSENSITIVE
       , HSCS_Sensitive
 #endif
@@ -302,11 +302,11 @@ HashedStringEntry* HashedStringMap_FindOrAdd(
 
 #ifdef HASHEDSTRING_ALLOW_CASE_INSENSITIVE
     // Try find case-insensitive entry
-    HashedStringEntry* existingLCaseEntry = HashedStringMap_Find(inMap, hashedString, HSCS_Insensitive);
+    HashedStringEntry_t* existingLCaseEntry = HashedStringMap_Find(inMap, hashedString, HSCS_Insensitive);
     if (!existingLCaseEntry)
     {
       const hsHash_t hash = hashedString->CommonHash;
-      HashedStringEntry* lCaseEntry = HashedStringMap_AddInternal(inMap, hash, inLCaseString);
+      HashedStringEntry_t* lCaseEntry = HashedStringMap_AddInternal(inMap, hash, inLCaseString);
       if (outLCaseEntry)
       {
         *outLCaseEntry = lCaseEntry;
@@ -322,9 +322,9 @@ HashedStringEntry* HashedStringMap_FindOrAdd(
   return NULL;
 }
 
-HashedStringEntry* HashedStringMap_Find(
-  HashedStringMap* inMap,
-  HashedString* hashedString
+HashedStringEntry_t* HashedStringMap_Find(
+  HashedStringMap_t* inMap,
+  const HashedString_t* hashedString
 #ifdef HASHEDSTRING_ALLOW_CASE_INSENSITIVE
   , HashedStringCaseSensitivity sensitivity
 #endif // HASHEDSTRING_ALLOW_CASE_INSENSITIVE
@@ -340,7 +340,7 @@ HashedStringEntry* HashedStringMap_Find(
 
     // Get bucket index
     const uint32_t bucketIndex = HashedStringMap_GetBucketIndex(inMap, hash);
-    HashedStringEntry* entry = HashedStringMap_GetBucket(inMap, bucketIndex);
+    HashedStringEntry_t* entry = HashedStringMap_GetBucket(inMap, bucketIndex);
     
     // Traverse list until entry->Key == hash or we run out of entries
     while (entry && entry->Key != hash)
@@ -352,11 +352,11 @@ HashedStringEntry* HashedStringMap_Find(
   return NULL;
 }
 
-const char* HashedStringMap_GetString(HashedStringMap* inMap, HashedString* hashedString)
+const char* HashedStringMap_GetString(HashedStringMap_t* inMap, const HashedString_t* hashedString)
 {
   if (inMap && hashedString)
   {
-    HashedStringEntry* entry = HashedStringMap_Find(inMap, hashedString
+    HashedStringEntry_t* entry = HashedStringMap_Find(inMap, hashedString
 #ifdef HASHEDSTRING_ALLOW_CASE_INSENSITIVE
       , HSCS_Sensitive
 #endif

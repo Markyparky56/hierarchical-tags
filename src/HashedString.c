@@ -8,6 +8,7 @@
 #if HASHEDSTRING_ALLOW_CASE_INSENSITIVE
 #include <ctype.h>
 #endif // HASHEDSTRING_ALLOW_CASE_INSENSITIVE
+#include <assert.h>
 
 #ifdef HASHEDSTRING_USE_CITYHASH
 #include "city.h"
@@ -20,11 +21,11 @@
 #endif
 
 static bool bCreatedHashedStringMapSingleton = false;
-alignas(HashedStringMap) static uint8_t HashedStringMapSingletonData[sizeof(HashedStringMap)];
+alignas(HashedStringMap_t) static uint8_t HashedStringMapSingletonData[sizeof(HashedStringMap_t)];
 
-static HashedStringMap* GetHashedStringMap()
+static HashedStringMap_t* GetHashedStringMap()
 {
-  HashedStringMap* hashedStringMapSingleton = (HashedStringMap*)HashedStringMapSingletonData;
+  HashedStringMap_t* hashedStringMapSingleton = (HashedStringMap_t*)HashedStringMapSingletonData;
 
   if (bCreatedHashedStringMapSingleton)
   {
@@ -38,9 +39,9 @@ static HashedStringMap* GetHashedStringMap()
   }
 }
 
-static HashedStringMap* GetHashedStringMapUnchecked()
+static HashedStringMap_t* GetHashedStringMapUnchecked()
 {
-  HashedStringMap* hashedStringMapSingleton = (HashedStringMap*)HashedStringMapSingletonData;
+  HashedStringMap_t* hashedStringMapSingleton = (HashedStringMap_t*)HashedStringMapSingletonData;
   return hashedStringMapSingleton;
 }
 
@@ -74,14 +75,16 @@ static void StringToLowerCase(const char* restrict srcString, char* restrict dst
   }
 }
 
-HashedString HashedString_Create(const char* inString)
+HashedString_t HashedString_Create(const char* inString)
 {
-  HashedString hStr;
+  HashedString_t hStr;
 
   if (inString == NULL)
   {
     hStr.Hash = 0;
+#if HASHEDSTRING_ALLOW_CASE_INSENSITIVE
     hStr.CommonHash = 0;
+#endif
     return hStr;
   }
 
@@ -98,7 +101,7 @@ HashedString HashedString_Create(const char* inString)
     lCaseHash = HashString(lCaseString, strLength);
 
     // Add to map for later look-up
-    HashedStringMap* stringMap = GetHashedStringMap();
+    HashedStringMap_t* stringMap = GetHashedStringMap();
     HashedStringMap_FindOrAdd(stringMap, &hStr, inString, lCaseString, NULL);
   }
   else
@@ -112,7 +115,7 @@ HashedString HashedString_Create(const char* inString)
     lCaseHash = HashString(lCaseString, strLength);
 
     // Add to map for later look-up
-    HashedStringMap* stringMap = GetHashedStringMap();
+    HashedStringMap_t* stringMap = GetHashedStringMap();
     HashedStringMap_FindOrAdd(stringMap, &hStr, inString, lCaseString, NULL);
 
     free(lCaseString);
@@ -127,13 +130,40 @@ HashedString HashedString_Create(const char* inString)
   return hStr;
 }
 
-const char* HashedString_GetString(HashedString* inHashedString)
+const char* HashedString_GetString(const HashedString_t* inHashedString)
 {
   if (inHashedString)
   {
-    HashedStringMap* stringMap = GetHashedStringMap();
+    HashedStringMap_t* stringMap = GetHashedStringMap();
     const char* str = HashedStringMap_GetString(stringMap, inHashedString);
     return str;
   }
   return NULL;
+}
+
+bool HashedString_Compare(const HashedString_t* lhs, const HashedString_t* rhs)
+{
+  return false;// HashedString_Compare_WithSensitivity(lhs, rhs, HSCS_Sensitive);
+}
+
+bool HashedString_Compare_WithSensitivity(const HashedString_t* lhs, const HashedString_t* rhs, const HashedStringCaseSensitivity sensitivity)
+{
+  assert(lhs);
+  assert(rhs);
+  if (sensitivity == HSCS_Sensitive)
+  {
+    return lhs->Hash == rhs->Hash;
+  }
+#ifdef HASHEDSTRING_ALLOW_CASE_INSENSITIVE
+  else if (sensitivity == HSCS_Insensitive)
+  {
+    return lhs->CommonHash == rhs->CommonHash;
+  }
+#endif
+  else
+  {
+    // Unknown sensitivity requested
+    assert(false);
+    return false;
+  }
 }
